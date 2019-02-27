@@ -56,9 +56,10 @@ void tiff::Tiff2Raw::SaveAsRaw(const std::string& fileName, const Vec3i& start, 
 			s = tiffFileNames.size() * this->size.x*this->size.y;
 		std::unique_ptr<uchar> buf(new uchar[s]);
 		ReadSubData(start, size, buf.get());
+		std::cout << "Writing data...\n";
 		of.write(reinterpret_cast<const char*>(buf.get()), s);
+		std::cout << "Writing finished\n";
 	}
-
 }
 
 tiff::Size3 tiff::Tiff2Raw::DataSize() const

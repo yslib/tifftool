@@ -26,11 +26,11 @@ endif()
 #----------
 # libtiff
 #----------
-find_package(TIFF REQUIRED)
-if(TIFF_FOUND)
-	message(STATUS "Tiff Found:" ${TIFF_INCLUDE_DIRS}" "${TIFF_LIBRARIES})
-	include_directories(${TIFF_INCLUDE_DIR})
-endif(TIFF_FOUND)
+#find_package(TIFF REQUIRED)
+#if(TIFF_FOUND)
+#	message(STATUS "Tiff Found:" ${TIFF_INCLUDE_DIRS}" "${TIFF_LIBRARIES})
+#	include_directories(${TIFF_INCLUDE_DIR})
+#endif(TIFF_FOUND)
 
 
 find_package(OpenCV REQUIRED)
@@ -43,12 +43,29 @@ aux_source_directory("src" SRC_FILE)
 
 
 
+
+
 #------------
 #
 #------------
-link_directories(${PROJECT_NAME} "D:\\opencv\\build\\x64\\vc15\\bin")
+
 add_executable(${PROJECT_NAME} ${SRC_FILE})
+
+aux_source_directory("downsample" DOWNSAMPLE_DIR)
+add_executable("downsample" ${SRC_FILE} ${DOWNSAMPLE_DIR})
+
+aux_source_directory("statistic" STATISTIC_DIR)
+add_executable("statistic" ${SRC_FILE} ${STATISTIC_DIR})
+
+aux_source_directory("subregion" SUBREGION_DIR)
+add_executable("subregion" ${SRC_FILE} ${SUBREGION_DIR})
 
 add_executable("test" "test/test.cpp")
 
-target_link_libraries(${PROJECT_NAME} ${TIFF_LIBRARIES} ${OpenCV_LIBS})
+target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
+
+target_link_libraries("statistic" ${OpenCV_LIBS})
+
+target_link_libraries("subregion" ${OpenCV_LIBS})
+
+target_link_libraries("downsample" ${OpenCV_LIBS})
