@@ -1,77 +1,108 @@
 
-#include "tiffio.h"
 #include <iostream>
 #include <fstream>
 #include <strstream>
 
-int main(int argc, char ** argv)
+#include "tiffreader.h"
+#include "tiff2raw.h"
+
+
+void StatisticSeriesTiffs(const std::vector<std::string> & names)
 {
-	//TIFF* tif = TIFFOpen(argv[1], "r");
+	tiff::Tiff2Raw series(names, cv::IMREAD_GRAYSCALE);
 
-	TIFF* tif = TIFFOpen(R"(C:\data\test_02606.tif)", "r");
+	const auto size = series.DataSize();
 
-	if (tif) {
-		uint32 imageHeight,imageWidth;
-		tdata_t buf;
-		uint32 row;
+	const auto blockSize = tiff::Size3{ 32,32,32 };
 
-		uint16 bps,imageCompression,imagePhotoMetric,
-		imageSamplePerPixel,ResolutUnit,
-		imagePlanarConfig, Orientation;
-		uint32 imageRowsPerStrip;
+	const auto blockDim = tiff::Size3{ size.x / blockSize.x ,size.y/blockSize.y,size.z/blockSize.z};
 
-		float X_Resolut, Y_Resolut;
+	int leftTh = 10, rightTh = 255;
+	
+	const auto totalBlocks = blockDim.x * blockDim.y * blockDim.z;
 
+	
+	double ratio = 0.05;
 
 
+	std::vector<std::vector<std::vector<int>>> tables(blockDim.z, std::vector<std::vector<int>>(blockDim.y, std::vector<int>(blockDim.x)));
 
+	for(int z = 0 ;z<size.z;z++)
+	{
+		tiff::TiffObject tif(names[z],cv::IMREAD_GRAYSCALE);
 
-		TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &imageWidth);
-		TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &imageHeight);
-		//std::cout << "Image width and length" << imageWidth << imageLength;
-		TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bps);
-		TIFFGetField(tif, TIFFTAG_COMPRESSION, &imageCompression);
-		TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &imagePhotoMetric);
+		std::unique_ptr<uchar[]> buf(new uchar[size.x*size.y]);
 
-		TIFFGetField(tif, TIFFTAG_SAMPLESPERPIXEL, &imageSamplePerPixel);
-		TIFFGetField(tif, TIFFTAG_ROWSPERSTRIP, &imageRowsPerStrip);
-		if (imageRowsPerStrip != 1)
+		tif.ReadData(buf.get());
+
+		for (int by = 0; by < blockDim.y; by++)
 		{
-			std::cout<< "Rows Each Strip Is Not 1!";
-			//return;
+			for (int bx = 0; bx < blockDim.x; bx++)
+			{
+				for(int y = 0;y<blockSize.y;y++)
+				{
+					for(int x = 0;x<blockSize.x;x++)
+					{
+						const auto linear = tiff::Linear({bx*blockSize.x + x,by*blockSize.y + y}, size.x);
+						if(buf[linear] >= leftTh && buf[linear]<=rightTh)
+							tables[z / blockSize.z][by][bx]++;
+					}
+				}
+			}
 		}
-
-		TIFFGetField(tif, TIFFTAG_XRESOLUTION, &X_Resolut);
-		TIFFGetField(tif, TIFFTAG_YRESOLUTION, &Y_Resolut);
-		TIFFGetField(tif, TIFFTAG_RESOLUTIONUNIT, &ResolutUnit);
-
-		TIFFGetField(tif, TIFFTAG_PLANARCONFIG, &imagePlanarConfig);
-		TIFFGetField(tif, TIFFTAG_ORIENTATION, &Orientation);
-
-		std::cout << "Image width and length: " << imageWidth << " " << imageWidth << std::endl;
-		std::cout << "bps: " << bps << std::endl;
-		std::cout << "imageCompression: " << imageCompression << std::endl;
-		std::cout << "imagePhotoMetric: " << imagePhotoMetric << std::endl;
-		std::cout << "imageSamplePerPixel: " << imageSamplePerPixel << std::endl;
-		std::cout << "imageRowsPerStrip: " << imageRowsPerStrip << std::endl;
-		std::cout << "X_Resolut: " << X_Resolut << std::endl;
-		std::cout << "Y_Resolut: " << Y_Resolut << std::endl;
-		std::cout << "ResolutUnit: " << ResolutUnit << std::endl;
-		std::cout << "imagePlanarConfig: " << imagePlanarConfig << std::endl;
-		std::cout << "Orientation: " << Orientation << std::endl;
-
-
-		buf = _TIFFmalloc(TIFFScanlineSize(tif));
-		for (row = 0; row < imageHeight; row++)
-			TIFFReadScanline(tif, buf, row);
-		_TIFFfree(buf);
-		TIFFClose(tif);
 	}
 
-	std::ifstream fileIn("");
-	std::strstream::pos_type a;
 
-	system("pause");
+	//
+	const auto blockCount = blockSize.x*blockSize.y*blockSize.z *ratio;
+	std::size_t validBlocks = 0;
+	for (int bz = 0; bz < blockDim.z; bz++) 
+	{
+		for (int by = 0; by < blockDim.y; by++)
+		{
+			for (int bx = 0; bx < blockDim.x; bx++)
+			{
+				if (tables[bz][by][bx] >= blockCount)
+					validBlocks++;
+			}
+		}
+	}
 
+	std::cout << validBlocks << " of " << totalBlocks << ":" << 1.0*validBlocks / totalBlocks << std::endl;
+}
+
+int main(int argc, char ** argv)
+{
+	//tiff::TiffObject reader(R"(C:\data\test_07712.tif)",cv::IMREAD_GRAYSCALE);
+	//if(reader.IsOpened())
+	//{
+	//	std::cout <<	"Read Success\n";
+	//	std::cout << reader.ImageSize();
+	//	const auto image1 = reader.Resize({ 1000,1000 }, tiff::TiffObject::Area);
+	//	const auto image2 = reader.Resize(0.01, 0.01, tiff::TiffObject::Area);
+	//	//image1.SaveAsImage(R"(D:\\test1.png)");
+	//	//image2.SaveAsImage(R"(D:\\test2.png)");
+	//	reader.ROI({reader.Width()/4,reader.Height()/4},{3968,3968}).SaveAsImage(R"(D:\\test3.png)");
+	//}
+
+	std::vector<std::string> names;
+	for(int i = 0 ; i<3968;i++)
+	{
+		std::stringstream ss;
+		ss << i;
+		std::string index;
+		ss >> index;
+		std::string name = R"(H:\14193\z\test_0)";
+		name += index + ".tif";
+		names.push_back(name);
+	}
+
+	tiff::Tiff2Raw rawConverter(names,cv::IMREAD_GRAYSCALE);
+	rawConverter.SaveAsRaw(R"(E:\data\mouseneuron\data_set.raw)", tiff::Vec3i( rawConverter.DataSize().x/4,rawConverter.DataSize().y/4,200), {3968,3968,3968 });
+	
 	return 0;
 }
+
+
+
+

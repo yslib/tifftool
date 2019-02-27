@@ -4,99 +4,139 @@
 #include <iostream>
 #include <cassert>
 
+
+
 namespace tiff
 {
-	TiffReader::TiffReader(const std::string& fileName):TiffReader()
+	TiffObject::TiffObject(const std::string& fileName, int flags) :flags(flags)
 	{
-		try
+		image = cv::imread(fileName, flags);
+		valid = !image.empty();
+	}
+
+	//TiffObject::TiffObject(TiffObject&& other)noexcept
+	//{
+	//	image = std::move(other.image);
+	//	ImageSize() = other.ImageSize();
+	//}
+
+	//TiffObject& TiffObject::operator=(TiffObject&& other)noexcept
+	//{
+	//	if (this != &other)
+	//	{
+	//		image = std::move(other.image);
+	//		ImageSize() = other.ImageSize();
+	//	}
+	//	return *this;
+	//}
+
+	TiffObject::~TiffObject()
+	{
+
+	}
+	int TiffObject::Chennels() const
+	{
+		return image.channels();
+	}
+
+	bool TiffObject::IsTiled() const
+	{
+		return false;
+	}
+
+	bool TiffObject::IsOpened() const
+	{
+		return valid;
+	}
+
+	void TiffObject::ReadTile()
+	{
+		std::cout << "The function is empty so far.\n";
+	}
+	int TiffObject::Width() const
+	{
+		return image.size().width;
+	}
+
+	int TiffObject::Height() const
+	{
+		return image.size().height;
+	}
+
+	Size2 TiffObject::ImageSize() const
+	{
+		return { (std::size_t)Width(),(std::size_t)Height() };
+	}
+
+	void TiffObject::ReadData(uchar* data)const
+	{
+		if (image.isContinuous())
 		{
-			Init(fileName);
+			memcpy(data, image.datastart, image.dataend - image.datastart);
 		}
-		catch (std::runtime_error & e)
+		else
 		{
-			std::cerr << e.what();
-
+			const auto scanLine = image.cols * image.channels();
+			for (auto i = 0; i < image.rows; i++)
+			{
+				memcpy(data + scanLine * i, image.ptr<uchar>(i), scanLine);
+			}
 		}
-	
 	}
 
-	TiffReader::TiffReader(TiffReader&& other)
+	void TiffObject::ReadSubData(const Vec2i& start, const Size2& size, uchar* data)const
 	{
-	}
+		//const auto channels = image.channels();
+		//const auto subWidth= std::min(size.x,std::size_t(image.cols - start.x)) * channels;
 
-	TiffReader& TiffReader::operator=(TiffReader&& other)
-	{
-	}
+		////const auto subBegin = std::min(start.x, image.cols)*channels;
 
-	TiffReader::~TiffReader()
-	{
-		if (tifHandler)
+		//const auto scanLine = image.channels()*size.x;
+		//for (auto i = 0; i < image.rows; i++)
+		//	memcpy((uchar*)data + scanLine*i, image.ptr<uchar>(i) + channels * start.x, subWidth);
+		if (start.x >= Width() || start.y >= Height())
+			return;
+
+		if(size.x * size.y != 0)
 		{
-			TIFFClose(tifHandler);
-			tifHandler = nullptr;
+			const auto tiff = ROI(start, size);
+			tiff.ReadData(data);
+		}else
+		{
+			const auto tiff = ROI(start, Size2(Width()-start.x,Height()-start.y));
+			tiff.ReadData(data);
 		}
-	}
-
-	int TiffReader::ChennelBits() const
-	{
-		uint16 sample, bits;
-		assert(tifHandler);
-		TIFFGetField(tifHandler, TIFFTAG_BITSPERSAMPLE, &bits);
-		TIFFGetField(tifHandler, TIFFTAG_SAMPLESPERPIXEL, &sample);
-		return sample * bits;
-	}
-
-
-	bool TiffReader::IsTiled() const
-	{
-		assert(tifHandler);
-		return TIFFIsTiled(tifHandler);
-	}
-
-	void TiffReader::ReadTile()
-	{
-		assert(TIFFIsTiled(tifHandler));
 
 	}
 
-	int TiffReader::Width() const
+	void TiffObject::SaveAsImage(const std::string& fileName)const
 	{
-		return tifSize.x;
+		cv::imwrite(cv::String(fileName), image);
 	}
 
-	int TiffReader::Height() const
+	TiffObject TiffObject::Resize(const Size2& size, int type)const
 	{
-		return tifSize.y;
+		auto newImage(*this);
+		cv::resize(image, newImage.image,cv::Size(size.x,size.y),0.0,0.0, type);
+		return newImage;
 	}
 
-	Size2 TiffReader::ImageSize() const
+	TiffObject TiffObject::Resize(double fx, double fy, int type)const
 	{
-		return tifSize;
+		auto newImage(*this);
+		cv::resize(image, newImage.image, cv::Size(), fx,fy, type);
+		return newImage;
 	}
 
-	void TiffReader::ReadData(void* data)
+	TiffObject TiffObject::ROI(const Vec2i& start, const Size2& size)const
 	{
-
+		auto newImage(*this);
+		newImage.image = cv::Mat(image, cv::Rect(start.x,start.y,size.x,size.y));
+		return newImage;
 	}
 
-	void TiffReader::ReadSubData(const Vec2i& start, const Size2& size, void* data)
+	TiffObject::TiffObject():flags(-1),valid(false)
 	{
 
-	}
-
-	TiffReader::TiffReader():tifHandler(nullptr)
-	{
-	}
-
-	void TiffReader::Init(const std::string& fileName)
-	{
-		tifHandler = TIFFOpen(fileName.c_str(), "r");
-		if (tifHandler)
-			throw std::runtime_error("Tiff image cannot be loaded.\n");
-
-		uint32 h, w;
-		TIFFGetField(tifHandler, TIFFTAG_IMAGELENGTH, &h);
-		w = TIFFScanlineSize(tifHandler);
-		tifSize = Size2{ w,h };
 	}
 }
