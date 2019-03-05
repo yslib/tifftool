@@ -3,7 +3,7 @@
 #include "tiffreader.h"
 #include <fstream>
 
-tiff::Tiff2Raw::Tiff2Raw(const std::vector<std::string>& fileNames, int flags):tiffFileNames(fileNames),flags(flags)
+tifftool::Tiff2Raw::Tiff2Raw(const std::vector<std::string>& fileNames, int flags):tiffFileNames(fileNames),flags(flags)
 {
 	if(fileNames.size())
 	{
@@ -14,7 +14,7 @@ tiff::Tiff2Raw::Tiff2Raw(const std::vector<std::string>& fileNames, int flags):t
 	}
 }
 
-void tiff::Tiff2Raw::ReadData(void * data)
+void tifftool::Tiff2Raw::ReadData(void * data)
 {
 	const auto s = size.x*size.y*channels;
 	
@@ -25,14 +25,14 @@ void tiff::Tiff2Raw::ReadData(void * data)
 	}
 }
 
-void tiff::Tiff2Raw::ReadSubData(const Vec3i& start, const Size3 & size, void* data)
+void tifftool::Tiff2Raw::ReadSubData(const Vec3i& start, const Size3 & size, void* data)
 {
 	auto s = size.x*size.y*channels;
 	if (s == 0)
 		s = this->size.x * this->size.y*channels;
 
-#pragma parallel for
-	for (int i = start.z; i < tiffFileNames.size(); i++)
+
+	for (int i = start.z; i < tiffFileNames.size() && i-start.z< size.z; i++)
 	{
 		TiffObject reader(tiffFileNames[i], flags);
 		if(reader.IsOpened() == false)
@@ -45,7 +45,7 @@ void tiff::Tiff2Raw::ReadSubData(const Vec3i& start, const Size3 & size, void* d
 	}
 }
 
-void tiff::Tiff2Raw::SaveAsRaw(const std::string& fileName, const Vec3i& start, const Size3& size)
+void tifftool::Tiff2Raw::SaveAsRaw(const std::string& fileName, const Vec3i& start, const Size3& size)
 {
 	std::ofstream of(fileName, std::ofstream::binary);
 	if(of.is_open())
@@ -62,7 +62,7 @@ void tiff::Tiff2Raw::SaveAsRaw(const std::string& fileName, const Vec3i& start, 
 	}
 }
 
-tiff::Size3 tiff::Tiff2Raw::DataSize() const
+tifftool::Size3 tifftool::Tiff2Raw::DataSize() const
 {
 	return size;
 }

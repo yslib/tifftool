@@ -5,7 +5,7 @@
 #include  <vector>
 #include "utils.h"
 
-namespace tiff
+namespace tifftool
 {
 	class Tiff2Raw
 	{

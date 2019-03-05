@@ -3,9 +3,9 @@
 #define _UTILS_H_
 
 #include <iostream>
-#include <opencv2/core/matx.hpp>
+//#include <opencv2/core/matx.hpp>
 
-namespace tiff
+namespace tifftool
 {
 	template<typename T>
 	struct Vec3
@@ -65,12 +65,6 @@ namespace tiff
 	{
 		return p.x + dimension.x*(p.y + p.z*dimension.y);
 	}
-
-	//inline std::size_t
-	//Linear(const Vector3i &v, const Size2 &dimension)
-	//{
-	//	return Linear(Point3i{v.x,v.y,v.z},dimension);
-	//}
 
 	inline
 		std::size_t

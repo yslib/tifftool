@@ -21,16 +21,14 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}
 endif()
 
 
-
-
 #----------
 # libtiff
 #----------
-#find_package(TIFF REQUIRED)
-#if(TIFF_FOUND)
-#	message(STATUS "Tiff Found:" ${TIFF_INCLUDE_DIRS}" "${TIFF_LIBRARIES})
-#	include_directories(${TIFF_INCLUDE_DIR})
-#endif(TIFF_FOUND)
+find_package(TIFF REQUIRED)
+if(TIFF_FOUND)
+	message(STATUS "Tiff Found:" ${TIFF_INCLUDE_DIRS}" "${TIFF_LIBRARIES})
+	include_directories(${TIFF_INCLUDE_DIR})
+endif(TIFF_FOUND)
 
 
 find_package(OpenCV REQUIRED)
@@ -60,12 +58,13 @@ add_executable("statistic" ${SRC_FILE} ${STATISTIC_DIR})
 aux_source_directory("subregion" SUBREGION_DIR)
 add_executable("subregion" ${SRC_FILE} ${SUBREGION_DIR})
 
-add_executable("test" "test/test.cpp")
+add_executable("test" "test/test.cpp" ${TIFF_LIBRARIES} ${SRC_FILE})
 
-target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
+target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} ${TIFF_LIBRARIES})
 
-target_link_libraries("statistic" ${OpenCV_LIBS})
+target_link_libraries("statistic" ${OpenCV_LIBS} ${TIFF_LIBRARIES})
 
-target_link_libraries("subregion" ${OpenCV_LIBS})
+target_link_libraries("subregion" ${OpenCV_LIBS} ${TIFF_LIBRARIES})
 
-target_link_libraries("downsample" ${OpenCV_LIBS})
+target_link_libraries("downsample" ${OpenCV_LIBS} ${TIFF_LIBRARIES})
+target_link_libraries("test" ${OpenCV_LIBS} ${TIFF_LIBRARIES})

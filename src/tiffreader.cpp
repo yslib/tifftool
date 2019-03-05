@@ -4,16 +4,15 @@
 #include <iostream>
 #include <cassert>
 
+#include "tiffio.h"
 
-
-namespace tiff
+namespace tifftool
 {
-	TiffObject::TiffObject(const std::string& fileName, int flags) :flags(flags)
+	TiffObject::TiffObject(const std::string& fileName, int flags) :flags(flags),fileName(fileName)
 	{
 		image = cv::imread(fileName, flags);
 		valid = !image.empty();
 	}
-
 	//TiffObject::TiffObject(TiffObject&& other)noexcept
 	//{
 	//	image = std::move(other.image);
@@ -29,6 +28,7 @@ namespace tiff
 	//	}
 	//	return *this;
 	//}
+
 
 	TiffObject::~TiffObject()
 	{
@@ -86,14 +86,6 @@ namespace tiff
 
 	void TiffObject::ReadSubData(const Vec2i& start, const Size2& size, uchar* data)const
 	{
-		//const auto channels = image.channels();
-		//const auto subWidth= std::min(size.x,std::size_t(image.cols - start.x)) * channels;
-
-		////const auto subBegin = std::min(start.x, image.cols)*channels;
-
-		//const auto scanLine = image.channels()*size.x;
-		//for (auto i = 0; i < image.rows; i++)
-		//	memcpy((uchar*)data + scanLine*i, image.ptr<uchar>(i) + channels * start.x, subWidth);
 		if (start.x >= Width() || start.y >= Height())
 			return;
 
@@ -107,6 +99,67 @@ namespace tiff
 			tiff.ReadData(data);
 		}
 
+
+		//TIFF * tif = TIFFOpen(fileName.c_str(),"r");
+		//int imageWidth, imageLength,imageRowsPerStrip;
+		//TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &imageWidth);
+		//TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &imageLength);
+		//TIFFGetField(tif, TIFFTAG_ROWSPERSTRIP, &imageRowsPerStrip);
+		//long long stripSize = TIFFStripSize(tif);
+		//long long stripsNumber = TIFFNumberOfStrips(tif);
+		//std::cout << imageWidth << " " << imageLength << " " << imageRowsPerStrip << " " << stripSize << " " << stripsNumber << std::endl;
+		////1. find the row range from start to end
+		//int realStartRow = 0, realEndRow = 0;
+		//realStartRow = start.y;
+		//realEndRow = start.y + size.y;
+
+		//const int realStripStart = realStartRow / imageRowsPerStrip;
+		//const int realStripEnd = realEndRow / imageRowsPerStrip;
+
+		//const int startStripRow = realStartRow % imageRowsPerStrip;
+		//const int endStripRow = realEndRow % imageRowsPerStrip;
+
+		////if (buf) {
+		////	free(buf);
+		////}
+
+		//int localStartRow = 0, localEndRow = 0;
+
+		//int curIndex = 0;
+		//std::unique_ptr<unsigned char[]> buf (new unsigned char[stripSize]);
+
+		//for (int strip = realStripStart; strip < realStripEnd; strip++) {
+		//	
+		//	TIFFReadEncodedStrip(tif, strip, buf.get(), (tsize_t)-1);
+
+		//	if (strip == realStripStart) 
+		//	{
+		//		localStartRow = startStripRow;
+		//	}
+		//	else
+		//	{
+		//		localStartRow = 0;
+		//	}
+		//	if (strip == realStripEnd - 1) 
+		//	{
+		//		localEndRow = endStripRow;
+		//	}
+		//	else 
+		//	{
+		//		localEndRow = imageRowsPerStrip - 1;
+		//	}
+		//	for (int i = localStartRow; i < localEndRow && curIndex < size.y; i++) 
+		//	{
+		//		for (int j = 0; j < size.x; j++) 
+		//		{
+		//			data[curIndex*size.x + j] = (buf[3 * (i*imageWidth + (int)(start.x) + j)] & 0xff);
+		//			//data[curIndex*size.x + j] += (buf[3 * (i*imageWidth + (int)(start.x) + j) + 1] & 0xff) << 8;
+		//			//data[curIndex*size.x + j] += (buf[3 * (i*imageWidth + (int)(start.x) + j) + 2] & 0xff) << 16;
+		//		}
+		//		curIndex++;
+		//	}
+		//}
+		//TIFFClose(tif);
 	}
 
 	void TiffObject::SaveAsImage(const std::string& fileName)const

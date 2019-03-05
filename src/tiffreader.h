@@ -7,13 +7,12 @@
 
 
 
-namespace tiff
+namespace tifftool
 {
 
 	class TiffObject
 	{
 	public:
-
 		enum ImageType{Depth8UI,Depth8I,Depth16UI,Depth16I,Depth32I,Depth32UI,Depth32F,Depth64F};
 		enum ResizeType
 		{
@@ -53,6 +52,7 @@ namespace tiff
 	private:
 		TiffObject();		// delegate constructor
 		//Size2 tifSize;
+		std::string fileName;
 		cv::Mat image;
 		int flags;
 		bool valid;
