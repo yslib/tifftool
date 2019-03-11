@@ -40,10 +40,11 @@ void tifftool::Tiff2Raw::ReadSubData(const Vec3i& start, const Size3 & size, voi
 			std::cout << tiffFileNames[i] << " can not be opened\n";
 			continue;
 		}
-		reader.ReadSubData({ start.x,start.y }, {size.x,size.y}, ((uchar*)(data) + i * s));
+		reader.ReadSubData({ start.x,start.y }, {size.x,size.y}, ((uchar*)(data) + (i-start.z) * s));
 		std::cout << tiffFileNames[i] << " has been read\n";
 	}
 }
+
 
 void tifftool::Tiff2Raw::SaveAsRaw(const std::string& fileName, const Vec3i& start, const Size3& size)
 {
