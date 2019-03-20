@@ -41,8 +41,6 @@ aux_source_directory("src" SRC_FILE)
 
 
 
-
-
 #------------
 #
 #------------
@@ -58,6 +56,9 @@ add_executable("statistic" ${SRC_FILE} ${STATISTIC_DIR})
 aux_source_directory("subregion" SUBREGION_DIR)
 add_executable("subregion" ${SRC_FILE} ${SUBREGION_DIR})
 
+aux_source_directory("convert2raw" CONVERT2RAW_DIR)
+add_executable("convert" ${SRC_FILE} ${CONVERT2RAW_DIR})
+
 add_executable("test" "test/test.cpp" ${TIFF_LIBRARIES} ${SRC_FILE})
 
 target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} ${TIFF_LIBRARIES})
@@ -67,4 +68,6 @@ target_link_libraries("statistic" ${OpenCV_LIBS} ${TIFF_LIBRARIES})
 target_link_libraries("subregion" ${OpenCV_LIBS} ${TIFF_LIBRARIES})
 
 target_link_libraries("downsample" ${OpenCV_LIBS} ${TIFF_LIBRARIES})
+target_link_libraries("convert" ${OpenCV_LIBS} ${TIFF_LIBRARIES})
+
 target_link_libraries("test" ${OpenCV_LIBS} ${TIFF_LIBRARIES})

@@ -51,15 +51,32 @@ void tifftool::Tiff2Raw::SaveAsRaw(const std::string& fileName, const Vec3i& sta
 	std::ofstream of(fileName, std::ofstream::binary);
 	if(of.is_open())
 	{
-		auto s = size.x * size.y * size.z * channels;
-		std::cout << "Bytes:" << s << std::endl;
-		if(s == 0)
-			s = tiffFileNames.size() * this->size.x*this->size.y;
-		std::unique_ptr<uchar> buf(new uchar[s]);
-		ReadSubData(start, size, buf.get());
-		std::cout << "Writing data...\n";
-		of.write(reinterpret_cast<const char*>(buf.get()), s);
-		std::cout << "Writing finished\n";
+		auto sliceBytes = size.x * size.y * channels;
+
+		//auto s = size.x * size.y * size.z * channels;
+		constexpr std::size_t sliceCount = 5;
+
+	//	std::cout << "Bytes:" << s << std::endl;
+	//	if(s == 0)
+	//		s = tiffFileNames.size() * this->size.x*this->size.y;
+
+		std::unique_ptr<uchar> buf(new uchar[sliceBytes*sliceCount]);
+
+		for(int i = 0 ; i<size.z;i+=sliceCount)
+		{
+			std::size_t slice;
+			if(i + sliceCount >= size.z)
+				slice = size.z - i;
+			else
+				slice = sliceCount;
+			const auto subStart = Vec3i(start.x, start.y, start.z + i);
+			const auto subSize = Size3(size.x,size.y,slice);
+			ReadSubData(subStart,subSize, buf.get());
+			of.write(reinterpret_cast<const char*>(buf.get()), sliceBytes*slice);
+			std::cout << sliceBytes * slice << std::endl;
+			std::cout << "Writing Substart:" << subStart << " subSize:" << subSize << " finished" << std::endl;
+		}
+
 	}
 }
 

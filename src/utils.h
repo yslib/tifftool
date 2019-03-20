@@ -40,7 +40,7 @@ namespace tifftool
 	template<typename T>
 	std::ostream & operator<<(std::ostream & os, const Vec3<T> & vec)
 	{
-		os << "[" << vec.x << ", " << vec.y << ", " << vec.z << "]\n";
+		os << "[" << vec.x << ", " << vec.y << ", " << vec.z << "]";
 		return os;
 	}
 
@@ -48,7 +48,7 @@ namespace tifftool
 	template<typename T>
 	std::ostream & operator<<(std::ostream & os, const Vec2<T> & vec)
 	{
-		os << "[" << vec.x << ", " << vec.y<<"]\n";
+		os << "[" << vec.x << ", " << vec.y<<"]";
 		return os;
 	}
 
